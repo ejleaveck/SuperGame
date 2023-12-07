@@ -1,0 +1,4 @@
+repository "SuperGame@edmondj_Official@cloud"
+  path "/"
+    br "/main"
+    co "/main"
