@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 441321761}
   - component: {fileID: 441321760}
   - component: {fileID: 441321759}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -227,8 +227,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 441321758}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 74.4991, y: -13.17, z: 0}
-  m_LocalScale: {x: 188.88629, y: 1, z: 1}
+  m_LocalPosition: {x: 69.6768, y: -14.0469, z: 0}
+  m_LocalScale: {x: 198.52278, y: 2.7538, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -347,6 +347,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 645b0b651fd0b304fa2b784152faa68d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  superDudePrefab: {fileID: 8348513033289175908, guid: f969dea0f876e6b4f8248ab6b55259e2, type: 3}
+  superGirlPrefab: {fileID: 8348513033289175908, guid: f969dea0f876e6b4f8248ab6b55259e2, type: 3}
+  spawnPoint: {fileID: 2109256324}
+  playerChoice: 0
 --- !u!4 &2109256324
 Transform:
   m_ObjectHideFlags: 0
@@ -355,7 +359,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2109256322}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -15, y: -10, z: 0}
+  m_LocalPosition: {x: -18, y: -5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
