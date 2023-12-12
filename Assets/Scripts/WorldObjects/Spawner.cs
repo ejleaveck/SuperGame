@@ -10,6 +10,7 @@ using UnityEngine;
         SuperDude,
         SuperGirl
     }
+
 /// <summary>
 /// Manages the spawning of the player characters in the game.
 /// </summary>
@@ -18,9 +19,11 @@ public class Spawner : MonoBehaviour
 
     [SerializeField] private GameObject superDudePrefab;
     [SerializeField] private GameObject superGirlPrefab;
-    [SerializeField] public Transform spawnPoint;
-     public PlayableCharacter playerChoice;
+    [SerializeField] private Transform spawnPoint;
 
+    
+
+    public PlayableCharacter playerChoice { get; private set; }
 
     // Start is called before the first frame update
     void Start()
@@ -35,17 +38,24 @@ public class Spawner : MonoBehaviour
     {
         if (spawnPoint != null && superDudePrefab != null && superGirlPrefab != null)
         {
+            GameObject instantiatedPlayer = null;
+
             switch (playerChoice)
             {
                 case PlayableCharacter.SuperDude:
-                    Instantiate(superDudePrefab, spawnPoint.position, spawnPoint.rotation);
-                    break;
+                    instantiatedPlayer = Instantiate(superDudePrefab, spawnPoint.position, spawnPoint.rotation);
+                                        break;
                 case PlayableCharacter.SuperGirl:
-                    Instantiate(superGirlPrefab, spawnPoint.position, spawnPoint.rotation);
-                    break;
+                   instantiatedPlayer =  Instantiate(superGirlPrefab, spawnPoint.position, spawnPoint.rotation);
+                                        break;
                 default:
                     Debug.LogWarning($"{nameof(Spawner)} > {nameof(SpawnPlayer)}: Unhandled player choice.");
                     break;
+            }
+
+            if (instantiatedPlayer != null)
+            {
+                Camera.main.GetComponent<CameraFollow>().SetPlayer(instantiatedPlayer.transform);
             }
         }
         else
@@ -53,5 +63,7 @@ public class Spawner : MonoBehaviour
             Debug.LogError($"{nameof(Spawner)} > {nameof(SpawnPlayer)}: One or more required components are not assigned.");
 
         }
+
+        
     }
 }

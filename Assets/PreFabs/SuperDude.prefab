@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 8348513033289175912}
   - component: {fileID: 8348513033289175914}
   - component: {fileID: -9112306505735089564}
+  - component: {fileID: -2011887373181990675}
   m_Layer: 0
   m_Name: SuperDude
   m_TagString: Player
@@ -183,12 +184,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walkSpeed: 10
   runSpeed: 20
-  accelerationTime: 1
+  accelerationTime: 2
   jumpForce: 40
-  fallForceMultiplier: 10
+  fallForceMultiplier: 20
   jumpableLayer:
     serializedVersion: 2
     m_Bits: 64
   groundCheck: {fileID: 2888816047005767016}
   groundCheckWidth: 1.5
   groundCheckHeight: 0.75
+--- !u!114 &-2011887373181990675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8348513033289175908}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0cd22cdedc67b46a16e3caaece71ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -1,8 +1,5 @@
-using System;
-using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Diagnostics;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -10,7 +7,7 @@ public class PlayerMovement : MonoBehaviour
     float moveDirection = 0;
     [SerializeField] private float walkSpeed = 10f;
     [SerializeField] private float runSpeed = 20f;
-    [SerializeField] private float accelerationTime = 1f;
+    [SerializeField] private float accelerationTime = 1.5f;
 
     private float currentSpeed;
     private float targetSpeed;
@@ -18,9 +15,13 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isRunning;
 
+    private bool leftButtonPressed = false;
+    private bool rightButtonPressed = false;
+
+
     // Jump variables
-    bool canJump = false;
     bool isJumping = false;
+    private bool jumpButtonReleasedEarly = false;
     [SerializeField] private float jumpForce = 30f;
     [SerializeField] private float fallForceMultiplier = 10f;
 
@@ -33,6 +34,8 @@ public class PlayerMovement : MonoBehaviour
 
 
     // Input variables
+    private const int maxCollidersInTheFrame = 30;
+    private Collider2D[] collidersInTheFrame = new Collider2D[maxCollidersInTheFrame];
 
 
     // References to other components or objects
@@ -40,6 +43,16 @@ public class PlayerMovement : MonoBehaviour
     private PlayableCharacter playerCharacterChoice;
     private SpriteRenderer characterSpriteRenderer;
 
+    private OutOfBoundsChecker outOfBoundsChecker;
+
+    private void OnDrawGizmos()
+    {
+        if (groundCheck != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(groundCheck.position, new Vector3(groundCheckWidth, groundCheckHeight, 1f));
+        }
+    }
 
     void Start()
     {
@@ -51,48 +64,108 @@ public class PlayerMovement : MonoBehaviour
 
         if (activePlayerRB == null || spawner == null)
         {
-            Debug.Log($"{nameof(PlayerMovement)} > {nameof(Update)} > activePlayerRB=\"{activePlayerRB.IsUnityNull().ToString()}\" > spawner=\"{spawner.IsUnityNull().ToString()}\".");
+            Debug.LogError($"{nameof(PlayerMovement)} > {nameof(Update)} > activePlayerRB=\"{activePlayerRB.IsUnityNull().ToString()}\" > spawner=\"{spawner.IsUnityNull().ToString()}\".");
         }
+
+        outOfBoundsChecker = GetComponent<OutOfBoundsChecker>();
         // ...
-
-
     }
 
 
     void Update()
     {
         // Get horizontal input
-        moveDirection = Input.GetAxisRaw("Horizontal");
-        FlipSpriteBasedOnMovement(moveDirection);
+        SetPlayerMoveDirection();
+
 
         isRunning = Input.GetButton("Fire1");
         targetSpeed = !Mathf.Approximately(moveDirection, 0) ? (isRunning ? runSpeed : walkSpeed) : 0f;
         speedSmoothing = !Mathf.Approximately(moveDirection, 0) ? walkSpeed / accelerationTime : walkSpeed / (accelerationTime / 2);
 
 
-        if (Input.GetButtonDown("Jump") && canJump)
+        if (Input.GetButtonDown("Fire2") && CanPlayerJump())
         {
             isJumping = true;
+            jumpButtonReleasedEarly = false;
         }
-
-
+        else if (Input.GetButtonUp("Fire2"))
+        {
+            jumpButtonReleasedEarly = true;
+        }
 
     }
 
     void FixedUpdate()
-    {
-        currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, speedSmoothing * Time.deltaTime);
-        //Apply the movment
-        activePlayerRB.velocity = new Vector2(moveDirection * currentSpeed, activePlayerRB.velocity.y);
+    { 
+        CheckOutOfBounds();
+        
+        MovePlayer(moveDirection);
 
-        // ground check
-        Collider2D[] colliders = Physics2D.OverlapBoxAll(groundCheck.position, new Vector2(groundCheckWidth, groundCheckHeight), 0f, jumpableLayer);
-        canJump = colliders.Length > 0;
-
-        if (isJumping && canJump)
+        if (isJumping)
         {
-            activePlayerRB.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            isJumping = false;
+            JumpThePlayer(1);
+        }
+
+        AcceleratePlayerFall();
+
+       
+    }
+
+    void CheckOutOfBounds()
+    {
+        if (outOfBoundsChecker.IsOutOfBoundsLeft && moveDirection < 0)
+        {
+            moveDirection = 0;
+                    }
+        else if (outOfBoundsChecker.IsOutOfBoundsRight && moveDirection > 0)
+        {
+            moveDirection = 0;
+        }
+    }
+
+    void SetPlayerMoveDirection()
+    {
+        bool leftButtonPressedThisFrame = Input.GetKeyDown(KeyCode.LeftArrow);
+        bool rightButtonPressedThisFrame = Input.GetKeyDown(KeyCode.RightArrow);
+        bool leftButtonReleasedThisFrame = Input.GetKeyUp(KeyCode.LeftArrow);
+        bool rightButtonReleasedThisFrame = Input.GetKeyUp(KeyCode.RightArrow);
+
+        if (leftButtonPressedThisFrame)
+        {
+            moveDirection = -1;
+            leftButtonPressed = true;
+            rightButtonPressed = false;
+        }
+
+        if (leftButtonReleasedThisFrame)
+        {
+            if (rightButtonPressed == false)
+            {
+                moveDirection = 0;
+            }
+            leftButtonPressed = false;
+        }
+
+        if (rightButtonPressedThisFrame)
+        {
+            moveDirection = 1;
+            rightButtonPressed = true;
+            leftButtonPressed = false;
+        }
+
+        if (rightButtonReleasedThisFrame)
+        {
+            if (leftButtonPressed == false)
+            {
+                moveDirection = 0;
+            }
+            rightButtonPressed = false;
+        }
+
+        //joystick control
+        if (!leftButtonPressed && !rightButtonPressed)
+        {
+            moveDirection = Input.GetAxisRaw("Horizontal");
         }
     }
 
@@ -104,27 +177,44 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    void MovePlayer(float direction)
     {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Jumpable"))
-        {
-            canJump = true;
+        FlipSpriteBasedOnMovement(direction);
 
+              currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, speedSmoothing * Time.deltaTime);
+        activePlayerRB.velocity = new Vector2(direction * currentSpeed, activePlayerRB.velocity.y);
+
+    }
+
+    void JumpThePlayer(float jumpForceMultiplier = 1f)
+    {
+        activePlayerRB.AddForce(Vector2.up * (jumpForce * jumpForceMultiplier), ForceMode2D.Impulse);
+        isJumping = false;
+    }
+
+    void AcceleratePlayerFall()
+    {
+        if (jumpButtonReleasedEarly && activePlayerRB.velocity.y > 0)
+        {
+            activePlayerRB.velocity += Vector2.up * Physics2D.gravity.y * (fallForceMultiplier - 1) * Time.deltaTime;
+        }
+        if (activePlayerRB.velocity.y < 0)
+        {
+            activePlayerRB.velocity += Vector2.up * Physics2D.gravity.y * (fallForceMultiplier - 1) * Time.deltaTime;
         }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    bool CanPlayerJump()
     {
-        if (((1 << collision.gameObject.layer) & jumpableLayer) != 0)
-        {
-            canJump = false;
-        }
-    }
+        // ground check
+        int colliderCount = Physics2D.OverlapBoxNonAlloc(groundCheck.position, new Vector2(groundCheckWidth, groundCheckHeight), 0f, collidersInTheFrame, jumpableLayer);
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(groundCheck.position, new Vector3(groundCheckWidth, groundCheckHeight, 1f));
+        if (colliderCount >= maxCollidersInTheFrame)
+        {
+            Debug.LogWarning($"{nameof(PlayerMovement)} > {nameof(CanPlayerJump)} > colliderCount=\"{colliderCount}\" > maxCollidersInTheFrame=\"{maxCollidersInTheFrame}\".");
+        }
+
+        return colliderCount > 0;
     }
 }
 
