@@ -1,13 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using Unity.VisualScripting;
 
 public class CameraFollow : MonoBehaviour
 {
-    private Transform playerTransform;
-    public Vector2 sceneBoundsMin;
-    public Vector2 sceneBoundsMax;
+    public Transform playerTransform;
+
+    private SceneBounds sceneBounds;
 
     [SerializeField] private float rightOffset;
     [SerializeField] private float topOffset;
@@ -16,42 +13,18 @@ public class CameraFollow : MonoBehaviour
 
     private Camera mainCamera;
 
-    private void OnDrawGizmos()
+    [SerializeField] private float cameraFollowSpeed = 1f;
+
+    private void Start()
     {
-        if (mainCamera == null)
+        mainCamera = Camera.main;
+
+        sceneBounds = FindObjectOfType<SceneBounds>();
+        if (sceneBounds == null)
         {
-            mainCamera = Camera.main;
+            Debug.LogError("${nameof(CameraFollow)}: No ${nameof(SceneBounds)} found in scene!");
+            return;
         }
-
-        if (mainCamera != null)
-        {
-            Gizmos.color = Color.blue;
-
-            float totalWidth = rightOffset + leftOffset;
-            float totalHeight = topOffset + bottomOffset;
-
-            Vector3 cameraCenter = mainCamera.ViewportToWorldPoint(new Vector3(.5f, .5f, 0f));
-            Vector3 offsetPosition = new Vector3(cameraCenter.x + (rightOffset - leftOffset) / 2f, cameraCenter.y + (topOffset - bottomOffset) / 2f, cameraCenter.z);
-
-            Gizmos.DrawWireCube(offsetPosition, new Vector3(totalWidth, totalHeight, 1f));
-        }
-        else
-        {
-            Debug.Log($"{nameof(CameraFollow)} > {nameof(OnDrawGizmos)}: No main camera found.");
-        }
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-    mainCamera = Camera.main;
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     public void SetPlayer(Transform player)
@@ -66,36 +39,37 @@ public class CameraFollow : MonoBehaviour
             Vector3 cameraPosition = mainCamera.WorldToViewportPoint(playerTransform.position);
             Vector3 newPosition = transform.position;
 
-            // Horizontal camera movement
-            if (cameraPosition.x > 0.5f + rightOffset)
+            // Calculate the boundary box
+            float boundaryRight = 0.5f + rightOffset;
+            float boundaryLeft = 0.5f - leftOffset;
+            float boundaryTop = 0.5f + topOffset;
+            float boundaryBottom = 0.5f - bottomOffset;
+
+            // Horizontal movement
+            if (cameraPosition.x > boundaryRight)
             {
-                newPosition.x = playerTransform.position.x - rightOffset;
+                newPosition.x = Mathf.Lerp(newPosition.x, playerTransform.position.x - rightOffset, cameraFollowSpeed * Time.deltaTime);
             }
-            else if (cameraPosition.x < 0.5f - leftOffset)
+            else if (cameraPosition.x < boundaryLeft)
             {
-                newPosition.x = playerTransform.position.x + leftOffset;
+                newPosition.x = Mathf.Lerp(newPosition.x, playerTransform.position.x + leftOffset, cameraFollowSpeed * Time.deltaTime);
             }
 
-            //Vertical camera movement
-            if(cameraPosition.y > 0.5f + topOffset)
+            // Vertical movement
+            if (cameraPosition.y > boundaryTop)
             {
-                newPosition.y = playerTransform.position.y - topOffset;
+                newPosition.y = Mathf.Lerp(newPosition.y, playerTransform.position.y - topOffset, cameraFollowSpeed * Time.deltaTime);
             }
-            else if (cameraPosition.y < 0.5f - bottomOffset)
+            else if (cameraPosition.y < boundaryBottom)
             {
-                newPosition.y = playerTransform.position.y + bottomOffset;
+                newPosition.y = Mathf.Lerp(newPosition.y, playerTransform.position.y + bottomOffset, cameraFollowSpeed * Time.deltaTime);
             }
 
-            newPosition.x = Mathf.Clamp(newPosition.x, sceneBoundsMin.x, sceneBoundsMax.x);
-            newPosition.y = Mathf.Clamp(newPosition.y, sceneBoundsMin.y, sceneBoundsMax.y);
+            // Clamping camera position
+            newPosition.x = Mathf.Clamp(newPosition.x, sceneBounds.SceneBoundsMin.x, sceneBounds.SceneBoundsMax.x);
+            newPosition.y = Mathf.Clamp(newPosition.y, sceneBounds.SceneBoundsMin.y, sceneBounds.SceneBoundsMax.y);
 
             transform.position = newPosition;
-
-            Debug.Log($"{nameof(CameraFollow)} > {nameof(LateUpdate)}: Camera position = {transform.position}.");
-        }
-        else
-        {
-            Debug.LogWarning($"{nameof(CameraFollow)} > {nameof(LateUpdate)}: No player transform to follow.");
         }
     }
 }

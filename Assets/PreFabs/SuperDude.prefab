@@ -109,7 +109,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 3
   m_Sprite: {fileID: 21300000, guid: a6ea5b58ea0d62346845dc6c5105669f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -189,7 +189,7 @@ MonoBehaviour:
   fallForceMultiplier: 20
   jumpableLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 1024
   groundCheck: {fileID: 2888816047005767016}
   groundCheckWidth: 1.5
   groundCheckHeight: 0.75
